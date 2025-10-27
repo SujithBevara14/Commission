@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Weekly Commission Calculator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{--bg:#0e1220;--panel:#121a39;--edge:#1b2557;--text:#e8ecff;--muted:#aab2d9;--accent:#7c8cff}
+  *{box-sizing:border-box}
+  body{
+    margin:0;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);
+    background:
+      radial-gradient(1200px 600px at 10% -20%, #13204a 0%, transparent 60%),
+      radial-gradient(1000px 600px at 90% 120%, #0e1a3a 0%, transparent 60%),
+      var(--bg);
+  }
+  .wrap{max-width:800px;margin:50px auto;padding:20px}
+  .card{
+    background:linear-gradient(180deg,var(--panel),var(--edge));
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:18px;padding:28px;box-shadow:0 18px 38px rgba(0,0,0,.35)
+  }
+  h1{margin:0 0 6px;font-weight:800}
+  .rows{margin-top:16px}
+  .row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+  .k{color:var(--muted)}
+  .v{font-weight:700}
+  .pill{background:rgba(124,140,255,.18);color:var(--accent);padding:4px 10px;border-radius:999px;font-weight:600}
+  .btn{display:inline-block;margin-top:18px;background:linear-gradient(180deg,var(--accent),#5e6cff);
+       color:#0b0f1e;text-decoration:none;padding:12px 16px;border-radius:12px;font-weight:800}
+</style>
+</head>
+<body>
+<script>
+  // Name for the report
+  const namePrompt = (prompt("Enter your name for the report:") || "Salesperson").trim() || "Salesperson";
+
+  // Collect sales with a post-test loop need to click done after u calculated evrything
+  let subtotal = 0;
+  let entry;
+  let guard = 0;
+
+  do {
+    if (++guard > 1000) break; // hard safety
+
+    entry = prompt(
+      "Enter a sale amount (e.g., 123.45 or 1,234.56 or 1.234,56).\n" +
+      "Currency symbols and commas are okay.\n" +
+      "Type 'Done' when finished."
+    );
+
+    if (entry === null) entry = "Done";         // Cancel = Done
+    entry = entry.trim();
+
+    if (/^done$/i.test(entry)) break;
+
+    
+    
+    let s = entry.replace(/[\s₹$]/g, "");
+
+    const lastDot = s.lastIndexOf(".");
+    const lastComma = s.lastIndexOf(",");
+
+    if (lastComma !== -1 && lastDot === -1) {
+      // "1234,56" -> "1234.56"
+      s = s.replace(",", ".");
+    } else if (lastComma !== -1 && lastDot !== -1) {
+      if (lastComma > lastDot) {
+        s = s.replace(/\./g, "").replace(",", ".");
+      } else {
+        s = s.replace(/,/g, "");
+      }
+    }
+    
+
+    const amt = Number(s);
+
+    if (Number.isFinite(amt) && amt >= 0) {
+      // round to cents 
+      subtotal = Math.round((subtotal + Math.round(amt * 100) / 100) * 100) / 100;
+    } else {
+      alert("Invalid entry. Please enter a non-negative amount like 123.45, or type 'Done'.");
+    }
+  } while (true);
+
+  // Commission tiers
+  let rate = 0;
+  if (subtotal <= 0) {
+    rate = 0;
+  } else if (subtotal <= 499.99) {
+    rate = 0.05;
+  } else if (subtotal <= 999.99) {
+    rate = 0.10;
+  } else {
+    rate = 0.15;
+  }
+
+  // Compute, rounded to cents
+  const commission = Math.round(subtotal * rate * 100) / 100;
+  const earnings   = Math.round((subtotal + commission) * 100) / 100;
+
+  // Formatters
+  const fmt = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+  const subtotalStr   = fmt.format(subtotal);
+  const commissionStr = fmt.format(commission);
+  const earningsStr   = fmt.format(earnings);
+  const rateStr       = (rate * 100).toFixed(2) + "%";
+
+  // Single output
+  document.write(`
+    <div class="wrap">
+      <div class="card">
+        <h1>Hello ${namePrompt.replace(/[<>]/g,"")}, Here is your Weekly Commission Report.</h1>
+        <p class="lead">Summary of your submitted transactions:</p>
+
+        <div class="rows">
+          <div class="row"><div class="k">Sales Total</div><div class="v">${subtotalStr}</div></div>
+          <div class="row"><div class="k">Commission Rate</div><div class="v"><span class="pill">${rateStr}</span></div></div>
+          <div class="row"><div class="k">Total Commission</div><div class="v">${commissionStr}</div></div>
+          <div class="row"><div class="k">Total Earnings</div><div class="v">${earningsStr}</div></div>
+        </div>
+
+        <a class="btn" href="" onclick="location.reload();return false;">Enter Another Report</a>
+      </div>
+    </div>
+  `);
+</script>
+</body>
+</html>
